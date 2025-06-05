@@ -1,8 +1,8 @@
 package main
 
 import (
+	"os"
 	"testing"
-	"time"
 )
 
 func BenchmarkTipsData_addTip(b *testing.B) {
@@ -49,12 +49,9 @@ func BenchmarkTipsData_removeTip(b *testing.B) {
 func BenchmarkLoadTips(b *testing.B) {
 	// Create a temporary tips file for benchmarking
 	tmpDir := b.TempDir()
-	originalHome := ""
-	if home := getEnv("HOME"); home != "" {
-		originalHome = home
-		setEnv("HOME", tmpDir)
-		defer setEnv("HOME", originalHome)
-	}
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmpDir)
+	defer os.Setenv("HOME", originalHome)
 	
 	// Create test data
 	testData := &TipsData{}
@@ -78,12 +75,9 @@ func BenchmarkLoadTips(b *testing.B) {
 
 func BenchmarkSaveTips(b *testing.B) {
 	tmpDir := b.TempDir()
-	originalHome := ""
-	if home := getEnv("HOME"); home != "" {
-		originalHome = home
-		setEnv("HOME", tmpDir)
-		defer setEnv("HOME", originalHome)
-	}
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmpDir)
+	defer os.Setenv("HOME", originalHome)
 	
 	// Create test data
 	testData := &TipsData{}
@@ -98,21 +92,6 @@ func BenchmarkSaveTips(b *testing.B) {
 			b.Fatalf("saveTips failed: %v", err)
 		}
 	}
-}
-
-// Helper functions for environment variable manipulation in tests
-func getEnv(key string) string {
-	// This would typically be os.Getenv(key)
-	// For benchmark purposes, we'll simulate
-	if key == "HOME" {
-		return "/tmp/benchmark-home"
-	}
-	return ""
-}
-
-func setEnv(key, value string) {
-	// This would typically be os.Setenv(key, value)
-	// For benchmark purposes, this is a no-op
 }
 
 func BenchmarkTipFiltering(b *testing.B) {
@@ -178,12 +157,9 @@ func BenchmarkJSONOperations(b *testing.B) {
 	}
 	
 	tmpDir := b.TempDir()
-	originalHome := ""
-	if home := getEnv("HOME"); home != "" {
-		originalHome = home
-		setEnv("HOME", tmpDir)
-		defer setEnv("HOME", originalHome)
-	}
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmpDir)
+	defer os.Setenv("HOME", originalHome)
 	
 	b.Run("Save", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

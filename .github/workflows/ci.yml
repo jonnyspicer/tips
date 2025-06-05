@@ -176,12 +176,7 @@ jobs:
       run: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
 
     - name: Run Gosec Security Scanner
-      run: gosec -fmt sarif -out gosec.sarif ./...
-
-    - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: gosec.sarif
+      run: gosec ./...
 
   dependency-check:
     name: Dependency Check
