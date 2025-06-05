@@ -1,0 +1,9 @@
+{
+  "tips": [
+    {
+      "id": "invalid-id",
+      "topic": "test"
+      // missing comma and content field
+    }
+  ]
+}
