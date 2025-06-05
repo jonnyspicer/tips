@@ -1,0 +1,19 @@
+# Global code owners
+* @jonnyspicer
+
+# Go code specific
+*.go @jonnyspicer
+
+# GitHub workflows and configuration
+.github/ @jonnyspicer
+
+# Testing files
+*_test.go @jonnyspicer
+testdata/ @jonnyspicer
+
+# Documentation
+*.md @jonnyspicer
+
+# Configuration files
+go.mod @jonnyspicer
+go.sum @jonnyspicer
