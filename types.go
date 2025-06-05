@@ -1,4 +1,3 @@
-// Package main provides data types and storage functions for the tips CLI tool.
 package main
 
 import (
@@ -13,25 +12,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// init initializes the random seed for tip selection
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// Tip represents a single tip with metadata
 type Tip struct {
-	ID        string    `json:"id"`        // Unique identifier
-	Topic     string    `json:"topic"`     // Topic category
-	Content   string    `json:"content"`   // Tip content
-	CreatedAt time.Time `json:"created_at"` // Creation timestamp
+	ID        string    `json:"id"`
+	Topic     string    `json:"topic"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-// TipsData holds the collection of all tips
 type TipsData struct {
-	Tips []Tip `json:"tips"` // Collection of tips
+	Tips []Tip `json:"tips"`
 }
 
-// getTipsFilePath returns the path to the tips storage file
 func getTipsFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -40,7 +35,6 @@ func getTipsFilePath() (string, error) {
 	return filepath.Join(homeDir, ".tips.json"), nil
 }
 
-// loadTips loads tips from the storage file
 func loadTips() (*TipsData, error) {
 	filePath, err := getTipsFilePath()
 	if err != nil {
@@ -48,7 +42,7 @@ func loadTips() (*TipsData, error) {
 	}
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return &TipsData{Tips: []Tip{}}, nil
+		return &TipsData{}, nil
 	}
 
 	data, err := os.ReadFile(filePath)
@@ -57,7 +51,7 @@ func loadTips() (*TipsData, error) {
 	}
 
 	if len(data) == 0 {
-		return &TipsData{Tips: []Tip{}}, nil
+		return &TipsData{}, nil
 	}
 
 	var tipsData TipsData
@@ -68,7 +62,6 @@ func loadTips() (*TipsData, error) {
 	return &tipsData, nil
 }
 
-// saveTips saves tips to the storage file
 func saveTips(tipsData *TipsData) error {
 	if tipsData == nil {
 		return fmt.Errorf("tips data cannot be nil")
@@ -91,21 +84,18 @@ func saveTips(tipsData *TipsData) error {
 	return nil
 }
 
-// addTip adds a new tip to the collection
 func (td *TipsData) addTip(topic, content string) {
 	if topic == "" || content == "" {
-		return // Skip empty tips
+		return
 	}
-	tip := Tip{
+	td.Tips = append(td.Tips, Tip{
 		ID:        uuid.New().String(),
 		Topic:     strings.TrimSpace(topic),
 		Content:   strings.TrimSpace(content),
 		CreatedAt: time.Now(),
-	}
-	td.Tips = append(td.Tips, tip)
+	})
 }
 
-// removeTip removes a tip by ID, returns true if found and removed
 func (td *TipsData) removeTip(id string) bool {
 	for i, tip := range td.Tips {
 		if tip.ID == id {
@@ -116,21 +106,19 @@ func (td *TipsData) removeTip(id string) bool {
 	return false
 }
 
-// getRandomTip returns a random tip, optionally filtered by topics
 func (td *TipsData) getRandomTip(topics []string) *Tip {
 	if len(td.Tips) == 0 {
 		return nil
 	}
 
-	var filteredTips []Tip
-	if len(topics) == 0 {
-		filteredTips = td.Tips
-	} else {
-		topicMap := make(map[string]bool)
+	filteredTips := td.Tips
+	if len(topics) > 0 {
+		topicMap := make(map[string]bool, len(topics))
 		for _, topic := range topics {
 			topicMap[topic] = true
 		}
 
+		filteredTips = nil
 		for _, tip := range td.Tips {
 			if topicMap[tip.Topic] {
 				filteredTips = append(filteredTips, tip)
@@ -142,6 +130,5 @@ func (td *TipsData) getRandomTip(topics []string) *Tip {
 		return nil
 	}
 
-	randomIndex := rand.Intn(len(filteredTips))
-	return &filteredTips[randomIndex]
+	return &filteredTips[rand.Intn(len(filteredTips))]
 }

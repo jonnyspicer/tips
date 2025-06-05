@@ -1,4 +1,3 @@
-// Package main provides LLM integration for generating tips.
 package main
 
 import (
@@ -14,17 +13,14 @@ import (
 	"github.com/tmc/langchaingo/llms/openai"
 )
 
-// TipResponse represents a single tip from the LLM response
 type TipResponse struct {
-	Content string `json:"content"` // The tip content
+	Content string `json:"content"`
 }
 
-// TipsResponse represents the full response from the LLM
 type TipsResponse struct {
-	Tips []TipResponse `json:"tips"` // Array of generated tips
+	Tips []TipResponse `json:"tips"`
 }
 
-// createLLM creates an LLM client based on environment configuration
 func createLLM(ctx context.Context) (llms.Model, error) {
 	model := os.Getenv("TIPS_MODEL")
 	if model == "" {
@@ -36,34 +32,32 @@ func createLLM(ctx context.Context) (llms.Model, error) {
 		return nil, fmt.Errorf("invalid model format. Expected 'provider/model' (e.g., 'openai/gpt-4o')")
 	}
 
-	provider := parts[0]
-	modelName := parts[1]
+	provider, modelName := parts[0], parts[1]
 
 	switch provider {
 	case "openai":
-		apiKey := os.Getenv("OPENAI_API_KEY")
-		if apiKey == "" {
+		if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey == "" {
 			return nil, fmt.Errorf("OPENAI_API_KEY environment variable not set. Please set it with: export OPENAI_API_KEY='your-api-key'")
+		} else {
+			return openai.New(openai.WithModel(modelName), openai.WithToken(apiKey))
 		}
-		return openai.New(openai.WithModel(modelName), openai.WithToken(apiKey))
 	case "anthropic":
-		apiKey := os.Getenv("ANTHROPIC_API_KEY")
-		if apiKey == "" {
+		if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey == "" {
 			return nil, fmt.Errorf("ANTHROPIC_API_KEY environment variable not set. Please set it with: export ANTHROPIC_API_KEY='your-api-key'")
+		} else {
+			return anthropic.New(anthropic.WithModel(modelName), anthropic.WithToken(apiKey))
 		}
-		return anthropic.New(anthropic.WithModel(modelName), anthropic.WithToken(apiKey))
 	case "google":
-		apiKey := os.Getenv("GOOGLE_API_KEY")
-		if apiKey == "" {
+		if apiKey := os.Getenv("GOOGLE_API_KEY"); apiKey == "" {
 			return nil, fmt.Errorf("GOOGLE_API_KEY environment variable not set. Please set it with: export GOOGLE_API_KEY='your-api-key'")
+		} else {
+			return googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel(modelName))
 		}
-		return googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel(modelName))
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s. Supported providers: openai, anthropic, google", provider)
 	}
 }
 
-// generateTips generates tips for a given topic using the configured LLM
 func generateTips(topic string, count int) ([]TipResponse, error) {
 	ctx := context.Background()
 
@@ -104,13 +98,9 @@ Generate %d tips about %s in this cheatsheet style.`, count, topic, count, topic
 		return nil, fmt.Errorf("failed to generate content: %w", err)
 	}
 
-	// Clean the response in case it's wrapped in markdown code blocks
 	cleanResp := strings.TrimSpace(resp)
-	if strings.HasPrefix(cleanResp, "```json") {
+	if strings.HasPrefix(cleanResp, "```json") || strings.HasPrefix(cleanResp, "```") {
 		cleanResp = strings.TrimPrefix(cleanResp, "```json")
-		cleanResp = strings.TrimSuffix(cleanResp, "```")
-		cleanResp = strings.TrimSpace(cleanResp)
-	} else if strings.HasPrefix(cleanResp, "```") {
 		cleanResp = strings.TrimPrefix(cleanResp, "```")
 		cleanResp = strings.TrimSuffix(cleanResp, "```")
 		cleanResp = strings.TrimSpace(cleanResp)

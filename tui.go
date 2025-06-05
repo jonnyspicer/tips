@@ -1,4 +1,3 @@
-// Package main provides the terminal user interface for the tips CLI tool.
 package main
 
 import (
@@ -11,54 +10,54 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// tickMsg represents a timer tick for automatic refresh
 type tickMsg time.Time
 
-// model represents the application state for the TUI
 type model struct {
-	tipsData    *TipsData     // All loaded tips
-	currentTip  *Tip          // Currently displayed tip
-	topicFilter []string      // Topics to filter by
-	refreshRate time.Duration // How often to refresh tips
-	lastRefresh time.Time     // Last refresh timestamp
-	quit        bool          // Whether to quit the application
-	showNewTip  bool          // Whether to select a new tip
-	message     string        // Status message to display
+	tipsData    *TipsData
+	currentTip  *Tip
+	topicFilter []string
+	refreshRate time.Duration
+	lastRefresh time.Time
+	quit        bool
+	showNewTip  bool
+	message     string
 }
 
-// initialModel creates the initial application state
 func initialModel(topics []string, refreshMinutes int) model {
-	// Force color support
 	lipgloss.SetColorProfile(termenv.ANSI256)
 	
-	// Load tips synchronously at startup to avoid race conditions
 	tipsData, err := loadTips()
 	if err != nil {
 		fmt.Printf("Error loading tips: %v\n", err)
-		tipsData = &TipsData{Tips: []Tip{}}
+		tipsData = &TipsData{}
 	}
 	
-	return model{
+	m := model{
 		topicFilter: topics,
 		refreshRate: time.Duration(refreshMinutes) * time.Minute,
 		showNewTip:  true,
 		tipsData:    tipsData,
 	}
+	
+	// Set initial tip if available
+	if tipsData != nil && len(tipsData.Tips) > 0 {
+		if tip := tipsData.getRandomTip(topics); tip != nil {
+			m.currentTip = tip
+			m.showNewTip = false
+		}
+	}
+	
+	return m
 }
 
-// Init initializes the model (required by BubbleTea)
 func (m model) Init() tea.Cmd {
 	return tickCmd(m.refreshRate)
 }
 
-// tickCmd creates a command that sends a tick message after duration d
 func tickCmd(d time.Duration) tea.Cmd {
-	return tea.Tick(d, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
+	return tea.Tick(d, func(t time.Time) tea.Msg { return tickMsg(t) })
 }
 
-// loadTipsCmd creates a command to load tips from storage
 func loadTipsCmd() tea.Cmd {
 	return func() tea.Msg {
 		tipsData, err := loadTips()
@@ -69,11 +68,9 @@ func loadTipsCmd() tea.Cmd {
 	}
 }
 
-// Update handles messages and updates the model (required by BubbleTea)
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			m.quit = true
@@ -107,10 +104,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		m.showNewTip = true
 		m.lastRefresh = time.Time(msg)
-		return m, tea.Batch(
-			tickCmd(m.refreshRate),
-			loadTipsCmd(),
-		)
+		return m, tea.Batch(tickCmd(m.refreshRate), loadTipsCmd())
 
 	case error:
 		m.message = fmt.Sprintf("Error: %v", msg)
@@ -118,8 +112,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.showNewTip && m.tipsData != nil {
-		newTip := m.tipsData.getRandomTip(m.topicFilter)
-		if newTip != nil {
+		if newTip := m.tipsData.getRandomTip(m.topicFilter); newTip != nil {
 			m.currentTip = newTip
 		}
 		m.showNewTip = false
@@ -129,7 +122,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the current state (required by BubbleTea)
 func (m model) View() string {
 	if m.quit {
 		return ""
@@ -150,29 +142,14 @@ func (m model) View() string {
 		return "No tips available!\n\nPress 'q' to quit."
 	}
 
-	// Styles with explicit color codes
-	topicStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#00FFFF")).  // Cyan
-		Bold(true)
+	topicStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FFFF")).Bold(true)
+	contentStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
+	controlsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#808080")).MarginTop(1)
+	messageStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFF00")).MarginTop(1)
 
-	contentStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFFF"))   // White
-
-	controlsStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#808080")).  // Gray
-		MarginTop(1)
-
-	messageStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFF00")).  // Yellow
-		MarginTop(1)
-
-	// Build the view
-	var output string
-	output += topicStyle.Render(fmt.Sprintf("[%s]", m.currentTip.Topic)) + " "
-	output += contentStyle.Render(m.currentTip.Content) + "\n"
-	
-	refreshMinutes := int(m.refreshRate.Minutes())
-	output += controlsStyle.Render(fmt.Sprintf("n:next | k:known | q:quit | refresh:%dm", refreshMinutes))
+	output := topicStyle.Render(fmt.Sprintf("[%s]", m.currentTip.Topic)) + " " +
+		contentStyle.Render(m.currentTip.Content) + "\n" +
+		controlsStyle.Render(fmt.Sprintf("n:next | k:known | q:quit | refresh:%dm", int(m.refreshRate.Minutes())))
 
 	if m.message != "" {
 		output += "\n" + messageStyle.Render(m.message)
@@ -181,22 +158,11 @@ func (m model) View() string {
 	return output
 }
 
-// getCurrentTipID returns a short ID for the current tip (for debugging)
-func getCurrentTipID(tip *Tip) string {
-	if tip == nil {
-		return "nil"
-	}
-	return tip.ID[:8] // First 8 chars of UUID
-}
-
-// runBubbleTeaShow starts the interactive TUI mode
 func runBubbleTeaShow() error {
-	// Try to create the program
 	m := initialModel(topicFlag, refreshFlag)
 	p := tea.NewProgram(m, tea.WithInput(os.Stdin))
 	_, err := p.Run()
 	
-	// If TTY error, fall back to simple mode
 	if err != nil {
 		return runSimpleShow()
 	}
@@ -204,7 +170,6 @@ func runBubbleTeaShow() error {
 	return err
 }
 
-// runSimpleShow provides a fallback non-interactive mode
 func runSimpleShow() error {
 	tipsData, err := loadTips()
 	if err != nil {
@@ -226,7 +191,6 @@ func runSimpleShow() error {
 		return nil
 	}
 
-	// Use lipgloss for styling even in simple mode
 	topicStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("cyan")).Bold(true)
 	controlsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("gray"))
 
