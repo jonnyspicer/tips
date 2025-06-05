@@ -89,6 +89,17 @@ Show tips with automatic refresh:
 ./tips -t programming -t cooking
 ```
 
+### Clear Tips
+
+Remove all stored tips from local storage:
+
+```bash
+# Delete all tips
+./tips clear
+```
+
+This permanently deletes the `~/.tips.json` file and all stored tips.
+
 ### Interactive Controls
 While viewing tips:
 - Press `n` to immediately show the next tip
@@ -104,6 +115,7 @@ tips [OPTIONS] [COMMAND]
 Commands:
   show     Display tips (default command)
   generate Generate new tips for a topic
+  clear    Delete all stored tips
   
 Options:
   -t, --topic    Filter by topic (can specify multiple)
@@ -120,6 +132,7 @@ Options:
 ./tips -r 30                              # Refresh every 30 minutes
 ./tips generate -t "cooking"              # Generate 20 new cooking tips
 ./tips generate -t "go" -c 10             # Generate 10 new Go programming tips
+./tips clear                              # Delete all stored tips
 
 # Advanced usage
 ./tips -t programming -t cooking -r 15    # Show programming and cooking tips, refresh every 15 min
