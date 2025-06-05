@@ -10,6 +10,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.22.x, 1.23.x]
     
     steps:
     - name: Check out code
@@ -18,7 +21,15 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: 1.23.x
+        go-version: ${{ matrix.go-version }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
 
     - name: Download dependencies
       run: go mod download
@@ -43,6 +54,7 @@ jobs:
         fi
 
     - name: Upload coverage to Codecov
+      if: matrix.go-version == '1.23.x'
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.out
@@ -53,7 +65,15 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: test
-    
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          # Windows ARM64 builds can be problematic with some dependencies
+          - goos: windows
+            goarch: arm64
+
     steps:
     - name: Check out code
       uses: actions/checkout@v4
@@ -63,16 +83,40 @@ jobs:
       with:
         go-version: 1.23.x
 
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: Download dependencies
       run: go mod download
 
-    - name: Build for Linux
-      run: go build -o tips-linux .
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        EXT=""
+        if [ "$GOOS" = "windows" ]; then
+          EXT=".exe"
+        fi
+        go build -ldflags="-w -s" -o tips-${{ matrix.goos }}-${{ matrix.goarch }}$EXT .
 
     - name: Test binary execution
+      if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
       run: |
-        ./tips-linux --version
-        ./tips-linux --help
+        ./tips-linux-amd64 --version
+        ./tips-linux-amd64 --help
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: tips-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: tips-${{ matrix.goos }}-${{ matrix.goarch }}*
 
   lint:
     name: Lint
@@ -87,6 +131,14 @@ jobs:
       with:
         go-version: 1.23.x
 
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: Download dependencies
       run: go mod download
 
@@ -95,6 +147,161 @@ jobs:
       with:
         version: latest
         args: --timeout=5m
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.23.x
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Install Gosec
+      run: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+
+    - name: Run Gosec Security Scanner
+      run: gosec -fmt sarif -out gosec.sarif ./...
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: gosec.sarif
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.23.x
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Install govulncheck
+      run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    - name: Run vulnerability check
+      run: govulncheck ./...
+
+    - name: Check for outdated dependencies
+      run: |
+        go list -u -m all > dependencies.txt
+        echo "Current dependencies:"
+        cat dependencies.txt
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.23.x
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+    - name: Run staticcheck
+      run: staticcheck ./...
+
+    - name: Install ineffassign
+      run: go install github.com/gordonklaus/ineffassign@latest
+
+    - name: Run ineffassign
+      run: ineffassign ./...
+
+    - name: Install misspell
+      run: go install github.com/client9/misspell/cmd/misspell@latest
+
+    - name: Run misspell
+      run: misspell -error .
+
+    - name: Check gofmt
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "Code is not properly formatted:"
+          gofmt -s -l .
+          exit 1
+        fi
+
+    - name: Check go mod tidy
+      run: |
+        go mod tidy
+        if ! git diff --quiet; then
+          echo "go.mod or go.sum needs to be updated"
+          git diff
+          exit 1
+        fi
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.23.x
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run benchmarks
+      run: go test -bench=. -benchmem ./...
+
+    - name: Test with race detector
+      run: go test -race ./...
+
+    - name: Test memory usage
+      run: go test -tags=integration -run=TestMemoryUsage -v ./...
 
   homebrew-test:
     name: Homebrew Compatibility Test
@@ -110,11 +317,19 @@ jobs:
       with:
         go-version: 1.23.x
 
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: Download dependencies
       run: go mod download
 
     - name: Build for macOS
-      run: go build -o tips .
+      run: go build -ldflags="-w -s" -o tips .
 
     - name: Test binary on macOS
       run: |
@@ -129,3 +344,40 @@ jobs:
         mkdir -p /tmp/homebrew-test/bin
         cp tips /tmp/homebrew-test/bin/
         /tmp/homebrew-test/bin/tips --version
+
+    - name: Test with Homebrew structure
+      run: |
+        # Simulate Homebrew installation structure
+        mkdir -p /tmp/homebrew-test/{bin,share/doc/tips}
+        cp tips /tmp/homebrew-test/bin/
+        cp README.md /tmp/homebrew-test/share/doc/tips/ 2>/dev/null || echo "README.md not found, skipping"
+        
+        # Test binary in Homebrew-like environment
+        export PATH="/tmp/homebrew-test/bin:$PATH"
+        which tips
+        tips --version
+
+  windows-test:
+    name: Windows Test
+    runs-on: windows-latest
+    needs: test
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.23.x
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Build for Windows
+      run: go build -ldflags="-w -s" -o tips.exe .
+
+    - name: Test binary on Windows
+      run: |
+        .\tips.exe --version
+        .\tips.exe --help
