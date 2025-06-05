@@ -12,9 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+// Removed deprecated rand.Seed() - Go 1.20+ uses automatic seeding
 
 type Tip struct {
 	ID        string    `json:"id"`

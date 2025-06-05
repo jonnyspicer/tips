@@ -182,7 +182,10 @@ func TestClearAllTips(t *testing.T) {
 		os.Stdout = originalStdout
 		
 		var buf bytes.Buffer
-		buf.ReadFrom(r)
+		_, err := buf.ReadFrom(r)
+		if err != nil {
+			t.Fatalf("Failed to read from pipe: %v", err)
+		}
 		output := buf.String()
 
 		if !strings.Contains(output, "No tips file found") {
@@ -217,7 +220,10 @@ func TestClearAllTips(t *testing.T) {
 		os.Stdout = originalStdout
 		
 		var buf bytes.Buffer
-		buf.ReadFrom(r)
+		_, err := buf.ReadFrom(r)
+		if err != nil {
+			t.Fatalf("Failed to read from pipe: %v", err)
+		}
 		output := buf.String()
 
 		if !strings.Contains(output, "Successfully deleted tips file") {
