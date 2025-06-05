@@ -7,7 +7,7 @@ import (
 
 func BenchmarkTipsData_addTip(b *testing.B) {
 	td := &TipsData{}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		td.addTip("benchmark", "This is a benchmark tip for performance testing")
@@ -16,12 +16,12 @@ func BenchmarkTipsData_addTip(b *testing.B) {
 
 func BenchmarkTipsData_getRandomTip(b *testing.B) {
 	td := &TipsData{}
-	
+
 	// Pre-populate with test data
 	for i := 0; i < 1000; i++ {
 		td.addTip("benchmark", "Benchmark tip content for performance testing")
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		td.getRandomTip([]string{"benchmark"})
@@ -32,14 +32,14 @@ func BenchmarkTipsData_removeTip(b *testing.B) {
 	// Pre-populate with test data
 	td := &TipsData{}
 	tipIDs := make([]string, b.N)
-	
+
 	for i := 0; i < b.N; i++ {
 		td.addTip("benchmark", "Benchmark tip content for removal testing")
 		if len(td.Tips) > 0 {
 			tipIDs[i] = td.Tips[len(td.Tips)-1].ID
 		}
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		td.removeTip(tipIDs[i])
@@ -52,18 +52,18 @@ func BenchmarkLoadTips(b *testing.B) {
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Create test data
 	testData := &TipsData{}
 	for i := 0; i < 100; i++ {
 		testData.addTip("benchmark", "Benchmark tip content for load testing")
 	}
-	
+
 	// Save the test data
 	if err := saveTips(testData); err != nil {
 		b.Fatalf("Failed to save test data: %v", err)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := loadTips()
@@ -78,13 +78,13 @@ func BenchmarkSaveTips(b *testing.B) {
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Create test data
 	testData := &TipsData{}
 	for i := 0; i < 100; i++ {
 		testData.addTip("benchmark", "Benchmark tip content for save testing")
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err := saveTips(testData)
@@ -96,7 +96,7 @@ func BenchmarkSaveTips(b *testing.B) {
 
 func BenchmarkTipFiltering(b *testing.B) {
 	td := &TipsData{}
-	
+
 	// Create tips with different topics
 	topics := []string{"git", "vim", "bash", "docker", "kubernetes"}
 	for _, topic := range topics {
@@ -104,7 +104,7 @@ func BenchmarkTipFiltering(b *testing.B) {
 			td.addTip(topic, "Benchmark tip content for filtering testing")
 		}
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		td.getRandomTip([]string{"git", "docker"})
@@ -113,18 +113,18 @@ func BenchmarkTipFiltering(b *testing.B) {
 
 func BenchmarkLargeDatasetOperations(b *testing.B) {
 	td := &TipsData{}
-	
+
 	// Create a large dataset
 	for i := 0; i < 10000; i++ {
 		td.addTip("large-dataset", "This is tip content for large dataset benchmark testing")
 	}
-	
+
 	b.Run("RandomSelection", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			td.getRandomTip([]string{"large-dataset"})
 		}
 	})
-	
+
 	b.Run("FilteredSelection", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			td.getRandomTip([]string{"large-dataset", "nonexistent"})
@@ -134,12 +134,12 @@ func BenchmarkLargeDatasetOperations(b *testing.B) {
 
 func BenchmarkConcurrentAccess(b *testing.B) {
 	td := &TipsData{}
-	
+
 	// Pre-populate with some data
 	for i := 0; i < 1000; i++ {
 		td.addTip("concurrent", "Concurrent access benchmark tip")
 	}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -150,17 +150,17 @@ func BenchmarkConcurrentAccess(b *testing.B) {
 
 func BenchmarkJSONOperations(b *testing.B) {
 	td := &TipsData{}
-	
+
 	// Create realistic dataset
 	for i := 0; i < 1000; i++ {
 		td.addTip("json-bench", "This is a benchmark tip with realistic content length for JSON serialization testing")
 	}
-	
+
 	tmpDir := b.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
-	
+
 	b.Run("Save", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := saveTips(td)
@@ -169,12 +169,12 @@ func BenchmarkJSONOperations(b *testing.B) {
 			}
 		}
 	})
-	
+
 	// Save once for load benchmark
 	if err := saveTips(td); err != nil {
 		b.Fatalf("Failed to save data for load benchmark: %v", err)
 	}
-	
+
 	b.Run("Load", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, err := loadTips()

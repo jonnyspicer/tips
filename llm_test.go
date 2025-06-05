@@ -10,13 +10,13 @@ import (
 
 func TestCreateLLM(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Save original environment variables
 	originalModel := os.Getenv("TIPS_MODEL")
 	originalOpenAI := os.Getenv("OPENAI_API_KEY")
 	originalAnthropic := os.Getenv("ANTHROPIC_API_KEY")
 	originalGoogle := os.Getenv("GOOGLE_API_KEY")
-	
+
 	defer func() {
 		os.Setenv("TIPS_MODEL", originalModel)
 		os.Setenv("OPENAI_API_KEY", originalOpenAI)
@@ -147,17 +147,17 @@ func TestCreateLLM(t *testing.T) {
 func TestTipResponseStructure(t *testing.T) {
 	// Test JSON marshaling/unmarshaling
 	tip := TipResponse{Content: "test content"}
-	
+
 	data, err := json.Marshal(tip)
 	if err != nil {
 		t.Errorf("Failed to marshal TipResponse: %v", err)
 	}
-	
+
 	var unmarshaled TipResponse
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
 		t.Errorf("Failed to unmarshal TipResponse: %v", err)
 	}
-	
+
 	if unmarshaled.Content != tip.Content {
 		t.Errorf("Expected content '%s', got '%s'", tip.Content, unmarshaled.Content)
 	}
@@ -171,21 +171,21 @@ func TestTipsResponseStructure(t *testing.T) {
 			{Content: "tip 2"},
 		},
 	}
-	
+
 	data, err := json.Marshal(response)
 	if err != nil {
 		t.Errorf("Failed to marshal TipsResponse: %v", err)
 	}
-	
+
 	var unmarshaled TipsResponse
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
 		t.Errorf("Failed to unmarshal TipsResponse: %v", err)
 	}
-	
+
 	if len(unmarshaled.Tips) != 2 {
 		t.Errorf("Expected 2 tips, got %d", len(unmarshaled.Tips))
 	}
-	
+
 	if unmarshaled.Tips[0].Content != "tip 1" {
 		t.Errorf("Expected first tip content 'tip 1', got '%s'", unmarshaled.Tips[0].Content)
 	}
@@ -268,17 +268,17 @@ func TestGenerateTipsJSONParsing(t *testing.T) {
 
 			var tipsResponse TipsResponse
 			err := json.Unmarshal([]byte(cleanResp), &tipsResponse)
-			
+
 			if !tt.expectError && err != nil {
 				t.Errorf("Unexpected error parsing JSON: %v", err)
 				return
 			}
-			
+
 			if tt.expectError && err == nil && len(tipsResponse.Tips) == 0 {
 				// Simulate the "no tips generated" error
 				err = &NoTipsError{}
 			}
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -308,22 +308,22 @@ func TestPromptGeneration(t *testing.T) {
 	// Test that the prompt contains expected elements
 	topic := "git"
 	count := 5
-	
+
 	expectedPrompt := generatePromptString(topic, count)
-	
+
 	// Check key elements are present
 	if !strings.Contains(expectedPrompt, topic) {
 		t.Errorf("Prompt should contain topic '%s'", topic)
 	}
-	
+
 	if !strings.Contains(expectedPrompt, "5") {
 		t.Error("Prompt should contain count")
 	}
-	
+
 	if !strings.Contains(expectedPrompt, "JSON") {
 		t.Error("Prompt should mention JSON format")
 	}
-	
+
 	if !strings.Contains(expectedPrompt, "cheatsheet") {
 		t.Error("Prompt should mention cheatsheet style")
 	}
@@ -357,24 +357,24 @@ func TestModelEnvironmentHandling(t *testing.T) {
 	// Save original
 	original := os.Getenv("TIPS_MODEL")
 	defer os.Setenv("TIPS_MODEL", original)
-	
+
 	// Test default model
 	os.Setenv("TIPS_MODEL", "")
 	expectedDefault := "openai/gpt-4o"
-	
+
 	model := os.Getenv("TIPS_MODEL")
 	if model == "" {
 		model = expectedDefault
 	}
-	
+
 	if model != expectedDefault {
 		t.Errorf("Expected default model '%s', got '%s'", expectedDefault, model)
 	}
-	
+
 	// Test custom model
 	customModel := "anthropic/claude-3-sonnet"
 	os.Setenv("TIPS_MODEL", customModel)
-	
+
 	model = os.Getenv("TIPS_MODEL")
 	if model != customModel {
 		t.Errorf("Expected custom model '%s', got '%s'", customModel, model)

@@ -11,29 +11,29 @@ import (
 func TestInitialModel(t *testing.T) {
 	topics := []string{"git", "vim"}
 	refreshMinutes := 30
-	
+
 	m := initialModel(topics, refreshMinutes)
-	
+
 	// Test topic filter
 	if len(m.topicFilter) != 2 {
 		t.Errorf("Expected 2 topic filters, got %d", len(m.topicFilter))
 	}
-	
+
 	if m.topicFilter[0] != "git" || m.topicFilter[1] != "vim" {
 		t.Errorf("Topic filter not set correctly: %v", m.topicFilter)
 	}
-	
+
 	// Test refresh rate
 	expectedDuration := time.Duration(refreshMinutes) * time.Minute
 	if m.refreshRate != expectedDuration {
 		t.Errorf("Expected refresh rate %v, got %v", expectedDuration, m.refreshRate)
 	}
-	
+
 	// Test initial state
 	if m.quit {
 		t.Error("Model should not start in quit state")
 	}
-	
+
 	// Test tips data initialization
 	if m.tipsData == nil {
 		t.Error("Tips data should be initialized")
@@ -42,7 +42,7 @@ func TestInitialModel(t *testing.T) {
 
 func TestModelInit(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	cmd := m.Init()
 	if cmd == nil {
 		t.Error("Init should return a command")
@@ -51,27 +51,27 @@ func TestModelInit(t *testing.T) {
 
 func TestModelUpdate_KeyMessages(t *testing.T) {
 	tests := []struct {
-		name        string
-		key         string
-		expectQuit  bool
+		name         string
+		key          string
+		expectQuit   bool
 		expectNewTip bool
 	}{
 		{
-			name:        "quit with q",
-			key:         "q",
-			expectQuit:  true,
+			name:         "quit with q",
+			key:          "q",
+			expectQuit:   true,
 			expectNewTip: false,
 		},
 		{
-			name:        "next tip with n",
-			key:         "n",
-			expectQuit:  false,
+			name:         "next tip with n",
+			key:          "n",
+			expectQuit:   false,
 			expectNewTip: false, // Gets set to true then immediately processed and set to false
 		},
 		{
-			name:        "mark known with k",
-			key:         "k",
-			expectQuit:  false,
+			name:         "mark known with k",
+			key:          "k",
+			expectQuit:   false,
 			expectNewTip: false, // Gets set to true then immediately processed and set to false
 		},
 	}
@@ -88,17 +88,17 @@ func TestModelUpdate_KeyMessages(t *testing.T) {
 			m.currentTip = &m.tipsData.Tips[0]
 			m.quit = false
 			m.showNewTip = false
-			
+
 			// Create key message
 			keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
-			
+
 			updatedModel, _ := m.Update(keyMsg)
 			updated := updatedModel.(model)
-			
+
 			if updated.quit != tt.expectQuit {
 				t.Errorf("Expected quit=%v, got quit=%v", tt.expectQuit, updated.quit)
 			}
-			
+
 			if updated.showNewTip != tt.expectNewTip {
 				t.Errorf("Expected showNewTip=%v, got showNewTip=%v", tt.expectNewTip, updated.showNewTip)
 			}
@@ -108,16 +108,16 @@ func TestModelUpdate_KeyMessages(t *testing.T) {
 
 func TestModelUpdate_CtrlC(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	// Test Ctrl+C
 	keyMsg := tea.KeyMsg{Type: tea.KeyCtrlC}
 	updatedModel, cmd := m.Update(keyMsg)
 	updated := updatedModel.(model)
-	
+
 	if !updated.quit {
 		t.Error("Ctrl+C should set quit to true")
 	}
-	
+
 	if cmd == nil {
 		t.Error("Ctrl+C should return quit command")
 	}
@@ -125,21 +125,21 @@ func TestModelUpdate_CtrlC(t *testing.T) {
 
 func TestModelUpdate_TipsData(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	// Test tips data update
 	newTipsData := &TipsData{
 		Tips: []Tip{
 			{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
 		},
 	}
-	
+
 	updatedModel, _ := m.Update(newTipsData)
 	updated := updatedModel.(model)
-	
+
 	if updated.tipsData != newTipsData {
 		t.Error("Tips data should be updated")
 	}
-	
+
 	if !updated.showNewTip {
 		t.Error("Should show new tip after data update")
 	}
@@ -147,16 +147,16 @@ func TestModelUpdate_TipsData(t *testing.T) {
 
 func TestModelUpdate_TickMessage(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	// Test tick message
 	tickMsg := tickMsg(time.Now())
 	updatedModel, cmd := m.Update(tickMsg)
 	updated := updatedModel.(model)
-	
+
 	if !updated.showNewTip {
 		t.Error("Tick should trigger new tip")
 	}
-	
+
 	if cmd == nil {
 		t.Error("Tick should return batch command")
 	}
@@ -164,12 +164,12 @@ func TestModelUpdate_TickMessage(t *testing.T) {
 
 func TestModelUpdate_ErrorMessage(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	// Test error message
 	testError := &TestError{message: "test error"}
 	updatedModel, _ := m.Update(testError)
 	updated := updatedModel.(model)
-	
+
 	if !strings.Contains(updated.message, "test error") {
 		t.Errorf("Expected error message to contain 'test error', got '%s'", updated.message)
 	}
@@ -271,7 +271,7 @@ func TestModelView(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := tt.setupModel()
 			output := m.View()
-			
+
 			if tt.expectedOutput != "" && !strings.Contains(output, tt.expectedOutput) {
 				t.Errorf("Expected output to contain '%s', got '%s'", tt.expectedOutput, output)
 			}
@@ -282,7 +282,7 @@ func TestModelView(t *testing.T) {
 func TestTickCmd(t *testing.T) {
 	duration := 5 * time.Second
 	cmd := tickCmd(duration)
-	
+
 	if cmd == nil {
 		t.Error("tickCmd should return a command")
 	}
@@ -290,14 +290,14 @@ func TestTickCmd(t *testing.T) {
 
 func TestLoadTipsCmd(t *testing.T) {
 	cmd := loadTipsCmd()
-	
+
 	if cmd == nil {
 		t.Error("loadTipsCmd should return a command")
 	}
-	
+
 	// Execute the command to test it
 	msg := cmd()
-	
+
 	// Should return either TipsData or an error
 	switch msg.(type) {
 	case *TipsData:
@@ -317,7 +317,7 @@ func TestRunSimpleShow(t *testing.T) {
 			t.Errorf("runSimpleShow panicked: %v", r)
 		}
 	}()
-	
+
 	// Just test that the function can be called
 	// The actual functionality would require more complex mocking
 	_ = runSimpleShow
@@ -335,17 +335,17 @@ func TestModelMarkKnown(t *testing.T) {
 	m.currentTip = &m.tipsData.Tips[0]
 	m.showNewTip = false
 	initialTipCount := len(m.tipsData.Tips)
-	
+
 	// Simulate 'k' key press
 	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")}
 	updatedModel, _ := m.Update(keyMsg)
 	updated := updatedModel.(model)
-	
+
 	// Tip should be removed from the data
 	if len(updated.tipsData.Tips) != initialTipCount-1 {
 		t.Errorf("Expected %d tips after removal, got %d", initialTipCount-1, len(updated.tipsData.Tips))
 	}
-	
+
 	// Verify the specific tip was removed
 	for _, tip := range updated.tipsData.Tips {
 		if tip.ID == "1" {
@@ -365,7 +365,7 @@ func (e *TestError) Error() string {
 
 func TestModelStateTransitions(t *testing.T) {
 	m := initialModel([]string{}, 60)
-	
+
 	// Test initial state - check what initialModel actually sets
 	// Based on the initialModel function, showNewTip starts as true
 	// but gets set to false if there are tips and a current tip is set
@@ -373,18 +373,18 @@ func TestModelStateTransitions(t *testing.T) {
 	if m.tipsData != nil && len(m.tipsData.Tips) > 0 && m.currentTip != nil {
 		expectedShowNewTip = false
 	}
-	
+
 	if m.showNewTip != expectedShowNewTip {
 		t.Errorf("Model showNewTip should be %v, got %v", expectedShowNewTip, m.showNewTip)
 	}
-	
+
 	// Add tips data
 	m.tipsData = &TipsData{
 		Tips: []Tip{
 			{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
 		},
 	}
-	
+
 	// Simulate showing a new tip
 	if m.showNewTip && m.tipsData != nil {
 		if newTip := m.tipsData.getRandomTip(m.topicFilter); newTip != nil {
@@ -393,11 +393,11 @@ func TestModelStateTransitions(t *testing.T) {
 		m.showNewTip = false
 		m.message = ""
 	}
-	
+
 	if m.showNewTip {
 		t.Error("showNewTip should be false after processing")
 	}
-	
+
 	if m.currentTip == nil {
 		t.Error("currentTip should be set")
 	}

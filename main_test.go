@@ -20,7 +20,7 @@ func TestRootCommand(t *testing.T) {
 	if rootCmd.Use != "tips" {
 		t.Errorf("Expected command name 'tips', got '%s'", rootCmd.Use)
 	}
-	
+
 	if rootCmd.Version != Version {
 		t.Errorf("Expected version '%s', got '%s'", Version, rootCmd.Version)
 	}
@@ -29,17 +29,17 @@ func TestRootCommand(t *testing.T) {
 func TestCommandFlags(t *testing.T) {
 	// Test that flags are properly defined
 	flags := rootCmd.PersistentFlags()
-	
+
 	topicFlag := flags.Lookup("topic")
 	if topicFlag == nil {
 		t.Error("Topic flag not found")
 	}
-	
+
 	refreshFlag := flags.Lookup("refresh")
 	if refreshFlag == nil {
 		t.Error("Refresh flag not found")
 	}
-	
+
 	countFlag := flags.Lookup("count")
 	if countFlag == nil {
 		t.Error("Count flag not found")
@@ -180,7 +180,7 @@ func TestClearAllTips(t *testing.T) {
 		// Restore stdout and read output
 		w.Close()
 		os.Stdout = originalStdout
-		
+
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r)
 		if err != nil {
@@ -197,7 +197,7 @@ func TestClearAllTips(t *testing.T) {
 		// Create temporary directory and file
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, ".tips.json")
-		
+
 		// Create a dummy tips file
 		if err := os.WriteFile(filePath, []byte(`{"tips":[]}`), 0644); err != nil {
 			t.Fatalf("Failed to create test file: %v", err)
@@ -218,7 +218,7 @@ func TestClearAllTips(t *testing.T) {
 		// Restore stdout and read output
 		w.Close()
 		os.Stdout = originalStdout
-		
+
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r)
 		if err != nil {
@@ -240,9 +240,9 @@ func TestClearAllTips(t *testing.T) {
 func TestShowCommandValidation(t *testing.T) {
 	// Test validation logic without calling the actual command
 	tests := []struct {
-		name         string
-		refreshFlag  int
-		expectError  bool
+		name        string
+		refreshFlag int
+		expectError bool
 	}{
 		{
 			name:        "valid refresh flag",
@@ -264,7 +264,7 @@ func TestShowCommandValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hasError := tt.refreshFlag <= 0
-			
+
 			if hasError != tt.expectError {
 				t.Errorf("Expected error=%v for refresh flag %d, got error=%v", tt.expectError, tt.refreshFlag, hasError)
 			}
@@ -275,7 +275,7 @@ func TestShowCommandValidation(t *testing.T) {
 func TestCommandStructure(t *testing.T) {
 	// Test that all expected commands are present
 	commands := []string{"show", "generate", "clear"}
-	
+
 	for _, cmdName := range commands {
 		found := false
 		for _, cmd := range rootCmd.Commands() {
@@ -295,15 +295,15 @@ func TestGenerateCommandLong(t *testing.T) {
 	if !strings.Contains(generateCmd.Long, "API key") {
 		t.Error("Generate command should mention API key requirements")
 	}
-	
+
 	if !strings.Contains(generateCmd.Long, "OPENAI_API_KEY") {
 		t.Error("Generate command should mention OPENAI_API_KEY")
 	}
-	
+
 	if !strings.Contains(generateCmd.Long, "ANTHROPIC_API_KEY") {
 		t.Error("Generate command should mention ANTHROPIC_API_KEY")
 	}
-	
+
 	if !strings.Contains(generateCmd.Long, "GOOGLE_API_KEY") {
 		t.Error("Generate command should mention GOOGLE_API_KEY")
 	}
@@ -314,15 +314,15 @@ func TestFlagDefaults(t *testing.T) {
 	if refreshFlag <= 0 {
 		refreshFlag = 60 // Reset to default for this test
 	}
-	
+
 	if countFlag <= 0 {
 		countFlag = 20 // Reset to default for this test
 	}
-	
+
 	if refreshFlag != 60 {
 		t.Errorf("Expected default refresh flag to be 60, got %d", refreshFlag)
 	}
-	
+
 	if countFlag != 20 {
 		t.Errorf("Expected default count flag to be 20, got %d", countFlag)
 	}

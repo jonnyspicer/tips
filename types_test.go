@@ -13,11 +13,11 @@ import (
 
 func TestTipsData_addTip(t *testing.T) {
 	tests := []struct {
-		name         string
-		topic        string
-		content      string
-		expectAdded  bool
-		expectedLen  int
+		name        string
+		topic       string
+		content     string
+		expectAdded bool
+		expectedLen int
 	}{
 		{
 			name:        "valid tip",
@@ -67,31 +67,31 @@ func TestTipsData_addTip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			td := &TipsData{}
 			initialLen := len(td.Tips)
-			
+
 			td.addTip(tt.topic, tt.content)
-			
+
 			if len(td.Tips) != initialLen+tt.expectedLen {
 				t.Errorf("Expected %d tips, got %d", initialLen+tt.expectedLen, len(td.Tips))
 			}
 
 			if tt.expectAdded && len(td.Tips) > 0 {
 				tip := td.Tips[len(td.Tips)-1]
-				
+
 				// Check ID is valid UUID
 				if _, err := uuid.Parse(tip.ID); err != nil {
 					t.Errorf("Invalid UUID: %v", err)
 				}
-				
+
 				// Check topic is trimmed
 				if tip.Topic != strings.TrimSpace(tt.topic) {
 					t.Errorf("Expected topic %q, got %q", strings.TrimSpace(tt.topic), tip.Topic)
 				}
-				
+
 				// Check content is trimmed
 				if tip.Content != strings.TrimSpace(tt.content) {
 					t.Errorf("Expected content %q, got %q", strings.TrimSpace(tt.content), tip.Content)
 				}
-				
+
 				// Check timestamp is recent
 				if time.Since(tip.CreatedAt) > time.Second {
 					t.Errorf("Timestamp too old: %v", tip.CreatedAt)
@@ -103,11 +103,11 @@ func TestTipsData_addTip(t *testing.T) {
 
 func TestTipsData_removeTip(t *testing.T) {
 	td := &TipsData{}
-	
+
 	// Add some test tips
 	tip1ID := "550e8400-e29b-41d4-a716-446655440001"
 	tip2ID := "550e8400-e29b-41d4-a716-446655440002"
-	
+
 	td.Tips = []Tip{
 		{ID: tip1ID, Topic: "git", Content: "tip 1", CreatedAt: time.Now()},
 		{ID: tip2ID, Topic: "vim", Content: "tip 2", CreatedAt: time.Now()},
@@ -142,15 +142,15 @@ func TestTipsData_removeTip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := td.removeTip(tt.tipID)
-			
+
 			if result != tt.expectedResult {
 				t.Errorf("Expected result %v, got %v", tt.expectedResult, result)
 			}
-			
+
 			if len(td.Tips) != tt.expectedLen {
 				t.Errorf("Expected %d tips remaining, got %d", tt.expectedLen, len(td.Tips))
 			}
-			
+
 			// Verify the tip was actually removed
 			if tt.expectedResult {
 				for _, tip := range td.Tips {
@@ -165,13 +165,13 @@ func TestTipsData_removeTip(t *testing.T) {
 
 func TestTipsData_getRandomTip(t *testing.T) {
 	td := &TipsData{}
-	
+
 	// Test empty tips
 	tip := td.getRandomTip(nil)
 	if tip != nil {
 		t.Error("Expected nil tip for empty tips data")
 	}
-	
+
 	// Add test tips
 	td.Tips = []Tip{
 		{ID: "1", Topic: "git", Content: "git tip", CreatedAt: time.Now()},
@@ -220,19 +220,19 @@ func TestTipsData_getRandomTip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tip := td.getRandomTip(tt.topics)
-			
+
 			if !tt.shouldFind {
 				if tip != nil {
 					t.Error("Expected nil tip for non-matching filter")
 				}
 				return
 			}
-			
+
 			if tip == nil {
 				t.Error("Expected non-nil tip")
 				return
 			}
-			
+
 			// Check if returned tip matches expected topics
 			topicFound := false
 			for _, expectedTopic := range tt.expectedTopics {
@@ -241,7 +241,7 @@ func TestTipsData_getRandomTip(t *testing.T) {
 					break
 				}
 			}
-			
+
 			if len(tt.expectedTopics) > 0 && !topicFound {
 				t.Errorf("Tip topic %q not in expected topics %v", tip.Topic, tt.expectedTopics)
 			}
@@ -254,11 +254,11 @@ func TestGetTipsFilePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getTipsFilePath failed: %v", err)
 	}
-	
+
 	if !strings.HasSuffix(path, ".tips.json") {
 		t.Errorf("Expected path to end with .tips.json, got %s", path)
 	}
-	
+
 	if !filepath.IsAbs(path) {
 		t.Errorf("Expected absolute path, got %s", path)
 	}
@@ -272,81 +272,81 @@ func TestLoadTips(t *testing.T) {
 		tmpDir := t.TempDir()
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
-		
+
 		tipsData, err := loadTips()
 		if err != nil {
 			t.Fatalf("loadTips failed: %v", err)
 		}
-		
+
 		if tipsData == nil {
 			t.Fatal("Expected non-nil tips data")
 		}
-		
+
 		if len(tipsData.Tips) != 0 {
 			t.Errorf("Expected empty tips, got %d", len(tipsData.Tips))
 		}
 	})
-	
+
 	// Test with empty file
 	t.Run("empty file", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, ".tips.json")
-		
+
 		// Create empty file
 		if err := os.WriteFile(filePath, []byte(""), 0644); err != nil {
 			t.Fatalf("Failed to create empty file: %v", err)
 		}
-		
+
 		// Mock getTipsFilePath
 		originalHome := os.Getenv("HOME")
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
-		
+
 		tipsData, err := loadTips()
 		if err != nil {
 			t.Fatalf("loadTips failed: %v", err)
 		}
-		
+
 		if len(tipsData.Tips) != 0 {
 			t.Errorf("Expected empty tips, got %d", len(tipsData.Tips))
 		}
 	})
-	
+
 	// Test with valid JSON
 	t.Run("valid JSON", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, ".tips.json")
-		
+
 		// Create valid JSON file
 		testData := TipsData{
 			Tips: []Tip{
 				{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
 			},
 		}
-		
+
 		jsonData, err := json.Marshal(testData)
 		if err != nil {
 			t.Fatalf("Failed to marshal test data: %v", err)
 		}
-		
+
 		if err := os.WriteFile(filePath, jsonData, 0644); err != nil {
 			t.Fatalf("Failed to write test file: %v", err)
 		}
-		
+
 		// Mock getTipsFilePath
 		originalHome := os.Getenv("HOME")
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
-		
+
 		tipsData, err := loadTips()
 		if err != nil {
 			t.Fatalf("loadTips failed: %v", err)
 		}
-		
+
 		if len(tipsData.Tips) != 1 {
 			t.Errorf("Expected 1 tip, got %d", len(tipsData.Tips))
 		}
-		
+
 		if tipsData.Tips[0].Topic != "test" {
 			t.Errorf("Expected topic 'test', got '%s'", tipsData.Tips[0].Topic)
 		}
@@ -361,44 +361,44 @@ func TestSaveTips(t *testing.T) {
 			t.Error("Expected error for nil tips data")
 		}
 	})
-	
+
 	// Test with valid data
 	t.Run("valid data", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		
+
 		// Mock getTipsFilePath
 		originalHome := os.Getenv("HOME")
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
-		
+
 		testData := &TipsData{
 			Tips: []Tip{
 				{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
 			},
 		}
-		
+
 		err := saveTips(testData)
 		if err != nil {
 			t.Fatalf("saveTips failed: %v", err)
 		}
-		
+
 		// Verify file was created
 		filePath := filepath.Join(tmpDir, ".tips.json")
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			t.Error("Tips file was not created")
 		}
-		
+
 		// Verify content
 		data, err := os.ReadFile(filePath)
 		if err != nil {
 			t.Fatalf("Failed to read saved file: %v", err)
 		}
-		
+
 		var savedData TipsData
 		if err := json.Unmarshal(data, &savedData); err != nil {
 			t.Fatalf("Failed to unmarshal saved data: %v", err)
 		}
-		
+
 		if len(savedData.Tips) != 1 {
 			t.Errorf("Expected 1 tip in saved data, got %d", len(savedData.Tips))
 		}
