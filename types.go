@@ -118,7 +118,7 @@ func (td *TipsData) getRandomTip(topics []string) *Tip {
 			topicMap[topic] = true
 		}
 
-		filteredTips = filteredTips[:0]
+		filteredTips = nil
 		for _, tip := range td.Tips {
 			if topicMap[tip.Topic] {
 				filteredTips = append(filteredTips, tip)

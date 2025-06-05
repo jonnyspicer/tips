@@ -32,12 +32,22 @@ func initialModel(topics []string, refreshMinutes int) model {
 		tipsData = &TipsData{}
 	}
 	
-	return model{
+	m := model{
 		topicFilter: topics,
 		refreshRate: time.Duration(refreshMinutes) * time.Minute,
 		showNewTip:  true,
 		tipsData:    tipsData,
 	}
+	
+	// Set initial tip if available
+	if tipsData != nil && len(tipsData.Tips) > 0 {
+		if tip := tipsData.getRandomTip(topics); tip != nil {
+			m.currentTip = tip
+			m.showNewTip = false
+		}
+	}
+	
+	return m
 }
 
 func (m model) Init() tea.Cmd {
