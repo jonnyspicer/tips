@@ -25,28 +25,27 @@ type model struct {
 
 func initialModel(topics []string, refreshMinutes int) model {
 	lipgloss.SetColorProfile(termenv.ANSI256)
-	
+
 	tipsData, err := loadTips()
 	if err != nil {
 		fmt.Printf("Error loading tips: %v\n", err)
 		tipsData = &TipsData{}
 	}
-	
+
 	m := model{
 		topicFilter: topics,
 		refreshRate: time.Duration(refreshMinutes) * time.Minute,
 		showNewTip:  true,
 		tipsData:    tipsData,
 	}
-	
-	// Set initial tip if available
+
 	if tipsData != nil && len(tipsData.Tips) > 0 {
 		if tip := tipsData.getRandomTip(topics); tip != nil {
 			m.currentTip = tip
 			m.showNewTip = false
 		}
 	}
-	
+
 	return m
 }
 
@@ -76,7 +75,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quit = true
 			return m, tea.Quit
 		}
-		
+
 		switch msg.String() {
 		case "q":
 			m.quit = true
@@ -162,11 +161,11 @@ func runBubbleTeaShow() error {
 	m := initialModel(topicFlag, refreshFlag)
 	p := tea.NewProgram(m, tea.WithInput(os.Stdin))
 	_, err := p.Run()
-	
+
 	if err != nil {
 		return runSimpleShow()
 	}
-	
+
 	return err
 }
 
