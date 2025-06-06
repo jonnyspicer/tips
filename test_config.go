@@ -64,7 +64,7 @@ func (r *APITestRunner) ExecuteWithRetry(ctx context.Context, operation func() e
 		// Create timeout context for this attempt
 		attemptCtx, cancel := context.WithTimeout(ctx, r.config.RequestTimeout)
 		_ = attemptCtx // Mark as used to avoid compiler warning
-		
+
 		err := operation()
 		cancel()
 
@@ -88,9 +88,9 @@ func (r *APITestRunner) ExecuteWithRetry(ctx context.Context, operation func() e
 // EstimateAndCheckCost estimates the cost of an operation and checks against limits
 func (r *APITestRunner) EstimateAndCheckCost(provider string, promptTokens, maxTokens int) error {
 	estimatedCost := estimateAPICost(provider, promptTokens, maxTokens)
-	
+
 	if r.totalCost+estimatedCost > r.config.MaxCostUSD {
-		return fmt.Errorf("estimated cost (%.4f USD) would exceed limit (%.4f USD)", 
+		return fmt.Errorf("estimated cost (%.4f USD) would exceed limit (%.4f USD)",
 			r.totalCost+estimatedCost, r.config.MaxCostUSD)
 	}
 
@@ -107,9 +107,9 @@ func (r *APITestRunner) GetStats() (requestCount int, totalCost float64) {
 func estimateAPICost(provider string, promptTokens, maxTokens int) float64 {
 	// Rough estimates based on current pricing (as of 2024)
 	// These should be updated regularly
-	
+
 	totalTokens := promptTokens + maxTokens
-	
+
 	switch provider {
 	case "openai":
 		// GPT-3.5-turbo pricing: ~$0.002 per 1k tokens
@@ -133,7 +133,7 @@ func isRetryableError(err error) bool {
 	}
 
 	errStr := err.Error()
-	
+
 	// Common retryable errors
 	retryableErrors := []string{
 		"rate limit",
@@ -158,12 +158,12 @@ func isRetryableError(err error) bool {
 
 // contains checks if a string contains a substring (case-insensitive)
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s == substr || 
-		    (len(s) > len(substr) && 
-		     (s[:len(substr)] == substr || 
-		      s[len(s)-len(substr):] == substr ||
-		      indexOf(s, substr) >= 0)))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			(len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					indexOf(s, substr) >= 0)))
 }
 
 // indexOf returns the index of substr in s, or -1 if not found

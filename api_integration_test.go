@@ -20,13 +20,13 @@ func TestRealAPIIntegration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		provider    string
-		envVar      string
-		topic       string
-		count       int
-		maxRetries  int
-		retryDelay  time.Duration
+		name       string
+		provider   string
+		envVar     string
+		topic      string
+		count      int
+		maxRetries int
+		retryDelay time.Duration
 	}{
 		{
 			name:       "OpenAI API Integration",
@@ -75,7 +75,7 @@ func TestRealAPIIntegration(t *testing.T) {
 			// Test API call with retry logic
 			var tips []Tip
 			var err error
-			
+
 			for attempt := 0; attempt <= tt.maxRetries; attempt++ {
 				if attempt > 0 {
 					t.Logf("Retrying %s (attempt %d/%d)", tt.name, attempt, tt.maxRetries)
@@ -165,7 +165,7 @@ func TestAPIErrorHandling(t *testing.T) {
 
 			tipResponses, err := generateTips(tt.topic, tt.count)
 			tips := convertToTips(tipResponses, tt.topic)
-			
+
 			// For some error cases, we expect failure
 			if tt.topic == "" {
 				if err == nil {
