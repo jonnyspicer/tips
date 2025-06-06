@@ -44,14 +44,14 @@ func TestTipsData_addTip(t *testing.T) {
 			name:        "whitespace topic",
 			topic:       "  ",
 			content:     "Some content",
-			expectAdded: true, // addTip checks == "" before trimming, so "  " != ""
+			expectAdded: true,
 			expectedLen: 1,
 		},
 		{
 			name:        "whitespace content",
 			topic:       "git",
 			content:     "  ",
-			expectAdded: true, // addTip checks == "" before trimming, so "  " != ""
+			expectAdded: true,
 			expectedLen: 1,
 		},
 		{
@@ -77,22 +77,18 @@ func TestTipsData_addTip(t *testing.T) {
 			if tt.expectAdded && len(td.Tips) > 0 {
 				tip := td.Tips[len(td.Tips)-1]
 
-				// Check ID is valid UUID
 				if _, err := uuid.Parse(tip.ID); err != nil {
 					t.Errorf("Invalid UUID: %v", err)
 				}
 
-				// Check topic is trimmed
 				if tip.Topic != strings.TrimSpace(tt.topic) {
 					t.Errorf("Expected topic %q, got %q", strings.TrimSpace(tt.topic), tip.Topic)
 				}
 
-				// Check content is trimmed
 				if tip.Content != strings.TrimSpace(tt.content) {
 					t.Errorf("Expected content %q, got %q", strings.TrimSpace(tt.content), tip.Content)
 				}
 
-				// Check timestamp is recent
 				if time.Since(tip.CreatedAt) > time.Second {
 					t.Errorf("Timestamp too old: %v", tip.CreatedAt)
 				}
@@ -151,7 +147,6 @@ func TestTipsData_removeTip(t *testing.T) {
 				t.Errorf("Expected %d tips remaining, got %d", tt.expectedLen, len(td.Tips))
 			}
 
-			// Verify the tip was actually removed
 			if tt.expectedResult {
 				for _, tip := range td.Tips {
 					if tip.ID == tt.tipID {

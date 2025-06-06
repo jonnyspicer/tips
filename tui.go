@@ -39,7 +39,6 @@ func initialModel(topics []string, refreshMinutes int) model {
 		tipsData:    tipsData,
 	}
 
-	// Set initial tip if available
 	if tipsData != nil && len(tipsData.Tips) > 0 {
 		if tip := tipsData.getRandomTip(topics); tip != nil {
 			m.currentTip = tip

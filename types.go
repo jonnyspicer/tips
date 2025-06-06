@@ -12,8 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Removed deprecated rand.Seed() - Go 1.20+ uses automatic seeding
-
 type Tip struct {
 	ID        string    `json:"id"`
 	Topic     string    `json:"topic"`
@@ -111,14 +109,14 @@ func (td *TipsData) getRandomTip(topics []string) *Tip {
 
 	filteredTips := td.Tips
 	if len(topics) > 0 {
-		topicMap := make(map[string]bool, len(topics))
+		topicSet := make(map[string]struct{}, len(topics))
 		for _, topic := range topics {
-			topicMap[topic] = true
+			topicSet[topic] = struct{}{}
 		}
 
-		filteredTips = nil
+		filteredTips = make([]Tip, 0, len(td.Tips))
 		for _, tip := range td.Tips {
-			if topicMap[tip.Topic] {
+			if _, exists := topicSet[tip.Topic]; exists {
 				filteredTips = append(filteredTips, tip)
 			}
 		}

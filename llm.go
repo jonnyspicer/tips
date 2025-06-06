@@ -36,23 +36,23 @@ func createLLM(ctx context.Context) (llms.Model, error) {
 
 	switch provider {
 	case "openai":
-		if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey == "" {
+		apiKey := os.Getenv("OPENAI_API_KEY")
+		if apiKey == "" {
 			return nil, fmt.Errorf("OPENAI_API_KEY environment variable not set. Please set it with: export OPENAI_API_KEY='your-api-key'")
-		} else {
-			return openai.New(openai.WithModel(modelName), openai.WithToken(apiKey))
 		}
+		return openai.New(openai.WithModel(modelName), openai.WithToken(apiKey))
 	case "anthropic":
-		if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey == "" {
+		apiKey := os.Getenv("ANTHROPIC_API_KEY")
+		if apiKey == "" {
 			return nil, fmt.Errorf("ANTHROPIC_API_KEY environment variable not set. Please set it with: export ANTHROPIC_API_KEY='your-api-key'")
-		} else {
-			return anthropic.New(anthropic.WithModel(modelName), anthropic.WithToken(apiKey))
 		}
+		return anthropic.New(anthropic.WithModel(modelName), anthropic.WithToken(apiKey))
 	case "google":
-		if apiKey := os.Getenv("GOOGLE_API_KEY"); apiKey == "" {
+		apiKey := os.Getenv("GOOGLE_API_KEY")
+		if apiKey == "" {
 			return nil, fmt.Errorf("GOOGLE_API_KEY environment variable not set. Please set it with: export GOOGLE_API_KEY='your-api-key'")
-		} else {
-			return googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel(modelName))
 		}
+		return googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel(modelName))
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s. Supported providers: openai, anthropic, google", provider)
 	}

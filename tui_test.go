@@ -14,7 +14,6 @@ func TestInitialModel(t *testing.T) {
 
 	m := initialModel(topics, refreshMinutes)
 
-	// Test topic filter
 	if len(m.topicFilter) != 2 {
 		t.Errorf("Expected 2 topic filters, got %d", len(m.topicFilter))
 	}
@@ -23,18 +22,15 @@ func TestInitialModel(t *testing.T) {
 		t.Errorf("Topic filter not set correctly: %v", m.topicFilter)
 	}
 
-	// Test refresh rate
 	expectedDuration := time.Duration(refreshMinutes) * time.Minute
 	if m.refreshRate != expectedDuration {
 		t.Errorf("Expected refresh rate %v, got %v", expectedDuration, m.refreshRate)
 	}
 
-	// Test initial state
 	if m.quit {
 		t.Error("Model should not start in quit state")
 	}
 
-	// Test tips data initialization
 	if m.tipsData == nil {
 		t.Error("Tips data should be initialized")
 	}
@@ -66,19 +62,18 @@ func TestModelUpdate_KeyMessages(t *testing.T) {
 			name:         "next tip with n",
 			key:          "n",
 			expectQuit:   false,
-			expectNewTip: false, // Gets set to true then immediately processed and set to false
+			expectNewTip: false,
 		},
 		{
 			name:         "mark known with k",
 			key:          "k",
 			expectQuit:   false,
-			expectNewTip: false, // Gets set to true then immediately processed and set to false
+			expectNewTip: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create fresh model with test data for each test
 			m := initialModel([]string{}, 60)
 			m.tipsData = &TipsData{
 				Tips: []Tip{
@@ -89,7 +84,6 @@ func TestModelUpdate_KeyMessages(t *testing.T) {
 			m.quit = false
 			m.showNewTip = false
 
-			// Create key message
 			keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
 
 			updatedModel, _ := m.Update(keyMsg)
@@ -109,7 +103,6 @@ func TestModelUpdate_KeyMessages(t *testing.T) {
 func TestModelUpdate_CtrlC(t *testing.T) {
 	m := initialModel([]string{}, 60)
 
-	// Test Ctrl+C
 	keyMsg := tea.KeyMsg{Type: tea.KeyCtrlC}
 	updatedModel, cmd := m.Update(keyMsg)
 	updated := updatedModel.(model)
@@ -126,7 +119,6 @@ func TestModelUpdate_CtrlC(t *testing.T) {
 func TestModelUpdate_TipsData(t *testing.T) {
 	m := initialModel([]string{}, 60)
 
-	// Test tips data update
 	newTipsData := &TipsData{
 		Tips: []Tip{
 			{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
@@ -148,7 +140,6 @@ func TestModelUpdate_TipsData(t *testing.T) {
 func TestModelUpdate_TickMessage(t *testing.T) {
 	m := initialModel([]string{}, 60)
 
-	// Test tick message
 	tickMsg := tickMsg(time.Now())
 	updatedModel, cmd := m.Update(tickMsg)
 	updated := updatedModel.(model)
@@ -165,7 +156,6 @@ func TestModelUpdate_TickMessage(t *testing.T) {
 func TestModelUpdate_ErrorMessage(t *testing.T) {
 	m := initialModel([]string{}, 60)
 
-	// Test error message
 	testError := &TestError{message: "test error"}
 	updatedModel, _ := m.Update(testError)
 	updated := updatedModel.(model)
@@ -295,36 +285,27 @@ func TestLoadTipsCmd(t *testing.T) {
 		t.Error("loadTipsCmd should return a command")
 	}
 
-	// Execute the command to test it
 	msg := cmd()
 
-	// Should return either TipsData or an error
 	switch msg.(type) {
 	case *TipsData:
-		// Success case
 	case error:
-		// Error case is also valid
 	default:
 		t.Errorf("Expected TipsData or error, got %T", msg)
 	}
 }
 
 func TestRunSimpleShow(t *testing.T) {
-	// This function is harder to test directly due to its dependencies,
-	// but we can test that it doesn't panic
 	defer func() {
 		if r := recover(); r != nil {
 			t.Errorf("runSimpleShow panicked: %v", r)
 		}
 	}()
 
-	// Just test that the function can be called
-	// The actual functionality would require more complex mocking
 	_ = runSimpleShow
 }
 
 func TestModelMarkKnown(t *testing.T) {
-	// Test the mark as known functionality
 	m := initialModel([]string{}, 60)
 	m.tipsData = &TipsData{
 		Tips: []Tip{
@@ -336,17 +317,14 @@ func TestModelMarkKnown(t *testing.T) {
 	m.showNewTip = false
 	initialTipCount := len(m.tipsData.Tips)
 
-	// Simulate 'k' key press
 	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")}
 	updatedModel, _ := m.Update(keyMsg)
 	updated := updatedModel.(model)
 
-	// Tip should be removed from the data
 	if len(updated.tipsData.Tips) != initialTipCount-1 {
 		t.Errorf("Expected %d tips after removal, got %d", initialTipCount-1, len(updated.tipsData.Tips))
 	}
 
-	// Verify the specific tip was removed
 	for _, tip := range updated.tipsData.Tips {
 		if tip.ID == "1" {
 			t.Error("Tip with ID '1' should have been removed")
@@ -354,7 +332,6 @@ func TestModelMarkKnown(t *testing.T) {
 	}
 }
 
-// Helper error type for testing
 type TestError struct {
 	message string
 }
@@ -366,9 +343,6 @@ func (e *TestError) Error() string {
 func TestModelStateTransitions(t *testing.T) {
 	m := initialModel([]string{}, 60)
 
-	// Test initial state - check what initialModel actually sets
-	// Based on the initialModel function, showNewTip starts as true
-	// but gets set to false if there are tips and a current tip is set
 	expectedShowNewTip := true
 	if m.tipsData != nil && len(m.tipsData.Tips) > 0 && m.currentTip != nil {
 		expectedShowNewTip = false
@@ -378,14 +352,12 @@ func TestModelStateTransitions(t *testing.T) {
 		t.Errorf("Model showNewTip should be %v, got %v", expectedShowNewTip, m.showNewTip)
 	}
 
-	// Add tips data
 	m.tipsData = &TipsData{
 		Tips: []Tip{
 			{ID: "1", Topic: "test", Content: "test content", CreatedAt: time.Now()},
 		},
 	}
 
-	// Simulate showing a new tip
 	if m.showNewTip && m.tipsData != nil {
 		if newTip := m.tipsData.getRandomTip(m.topicFilter); newTip != nil {
 			m.currentTip = newTip

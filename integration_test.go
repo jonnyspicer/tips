@@ -14,7 +14,6 @@ import (
 )
 
 func TestCLIIntegration(t *testing.T) {
-	// Build the binary first
 	binaryPath := buildTestBinary(t)
 	defer os.Remove(binaryPath)
 
@@ -78,13 +77,11 @@ func TestCLIIntegration(t *testing.T) {
 }
 
 func TestFileSystemIntegration(t *testing.T) {
-	// Create temporary home directory
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
 
-	// Test file operations
 	tipsData := &TipsData{
 		Tips: []Tip{
 			{
@@ -128,7 +125,6 @@ func TestFileSystemIntegration(t *testing.T) {
 }
 
 func TestConcurrentAccess(t *testing.T) {
-	// Create temporary home directory
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
@@ -192,7 +188,6 @@ func TestConcurrentAccess(t *testing.T) {
 }
 
 func TestLargeDatasetPerformance(t *testing.T) {
-	// Create temporary home directory
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
@@ -243,7 +238,6 @@ func TestLargeDatasetPerformance(t *testing.T) {
 }
 
 func TestMalformedJSONHandling(t *testing.T) {
-	// Create temporary home directory
 	tmpDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)

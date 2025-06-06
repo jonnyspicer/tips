@@ -27,7 +27,6 @@ func TestRootCommand(t *testing.T) {
 }
 
 func TestCommandFlags(t *testing.T) {
-	// Test that flags are properly defined
 	flags := rootCmd.PersistentFlags()
 
 	topicFlag := flags.Lookup("topic")
@@ -47,7 +46,6 @@ func TestCommandFlags(t *testing.T) {
 }
 
 func TestGenerateTipsForTopics(t *testing.T) {
-	// Save original values
 	originalTopicFlag := topicFlag
 	originalCountFlag := countFlag
 	defer func() {
@@ -66,43 +64,36 @@ func TestGenerateTipsForTopics(t *testing.T) {
 			name:          "empty topic string",
 			topics:        []string{""},
 			count:         5,
-			expectError:   false, // Should skip empty topics with warning
+			expectError:   false,
 			errorContains: "",
 		},
 		{
 			name:          "whitespace topic",
 			topics:        []string{"   "},
 			count:         5,
-			expectError:   false, // Should skip whitespace-only topics
+			expectError:   false,
 			errorContains: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set test values
 			topicFlag = tt.topics
 			countFlag = tt.count
 
-			// Create a dummy command for testing
 			cmd := &cobra.Command{}
 
-			// For tests that don't exit, we can test them directly
-			// The function will continue and try to generate tips but fail due to no API key
-			// which is expected behavior in tests
 			defer func() {
 				if r := recover(); r != nil {
 					t.Errorf("Function panicked: %v", r)
 				}
 			}()
 
-			// Run the function - it may fail due to API calls but shouldn't panic
 			generateTipsForTopics(cmd, []string{})
 		})
 	}
 }
 
-// Test validation logic separately to avoid os.Exit() calls
 func TestGenerateTipsValidation(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -138,7 +129,6 @@ func TestGenerateTipsValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test validation logic
 			hasError := false
 
 			if len(tt.topics) == 0 {
@@ -163,13 +153,11 @@ func TestGenerateTipsValidation(t *testing.T) {
 
 func TestClearAllTips(t *testing.T) {
 	t.Run("no file exists", func(t *testing.T) {
-		// Create temporary directory
 		tmpDir := t.TempDir()
 		originalHome := os.Getenv("HOME")
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
 
-		// Capture stdout
 		originalStdout := os.Stdout
 		r, w, _ := os.Pipe()
 		os.Stdout = w
@@ -177,7 +165,6 @@ func TestClearAllTips(t *testing.T) {
 		cmd := &cobra.Command{}
 		clearAllTips(cmd, []string{})
 
-		// Restore stdout and read output
 		w.Close()
 		os.Stdout = originalStdout
 
@@ -198,7 +185,6 @@ func TestClearAllTips(t *testing.T) {
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, ".tips.json")
 
-		// Create a dummy tips file
 		if err := os.WriteFile(filePath, []byte(`{"tips":[]}`), 0644); err != nil {
 			t.Fatalf("Failed to create test file: %v", err)
 		}
@@ -207,7 +193,6 @@ func TestClearAllTips(t *testing.T) {
 		os.Setenv("HOME", tmpDir)
 		defer os.Setenv("HOME", originalHome)
 
-		// Capture stdout
 		originalStdout := os.Stdout
 		r, w, _ := os.Pipe()
 		os.Stdout = w
@@ -215,7 +200,6 @@ func TestClearAllTips(t *testing.T) {
 		cmd := &cobra.Command{}
 		clearAllTips(cmd, []string{})
 
-		// Restore stdout and read output
 		w.Close()
 		os.Stdout = originalStdout
 
@@ -230,7 +214,6 @@ func TestClearAllTips(t *testing.T) {
 			t.Errorf("Expected success message, got '%s'", output)
 		}
 
-		// Verify file was deleted
 		if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 			t.Error("File should have been deleted")
 		}
@@ -238,7 +221,6 @@ func TestClearAllTips(t *testing.T) {
 }
 
 func TestShowCommandValidation(t *testing.T) {
-	// Test validation logic without calling the actual command
 	tests := []struct {
 		name        string
 		refreshFlag int
@@ -273,7 +255,6 @@ func TestShowCommandValidation(t *testing.T) {
 }
 
 func TestCommandStructure(t *testing.T) {
-	// Test that all expected commands are present
 	commands := []string{"show", "generate", "clear"}
 
 	for _, cmdName := range commands {
@@ -291,7 +272,6 @@ func TestCommandStructure(t *testing.T) {
 }
 
 func TestGenerateCommandLong(t *testing.T) {
-	// Test that generate command has proper documentation
 	if !strings.Contains(generateCmd.Long, "API key") {
 		t.Error("Generate command should mention API key requirements")
 	}
@@ -310,7 +290,6 @@ func TestGenerateCommandLong(t *testing.T) {
 }
 
 func TestFlagDefaults(t *testing.T) {
-	// Test default values are reasonable
 	if refreshFlag <= 0 {
 		refreshFlag = 60 // Reset to default for this test
 	}

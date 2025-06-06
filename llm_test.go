@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -11,7 +12,6 @@ import (
 func TestCreateLLM(t *testing.T) {
 	ctx := context.Background()
 
-	// Save original environment variables
 	originalModel := os.Getenv("TIPS_MODEL")
 	originalOpenAI := os.Getenv("OPENAI_API_KEY")
 	originalAnthropic := os.Getenv("ANTHROPIC_API_KEY")
@@ -118,7 +118,6 @@ func TestCreateLLM(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set environment variables
 			os.Setenv("TIPS_MODEL", tt.model)
 			os.Setenv("OPENAI_API_KEY", tt.openaiKey)
 			os.Setenv("ANTHROPIC_API_KEY", tt.anthropicKey)
@@ -145,7 +144,6 @@ func TestCreateLLM(t *testing.T) {
 }
 
 func TestTipResponseStructure(t *testing.T) {
-	// Test JSON marshaling/unmarshaling
 	tip := TipResponse{Content: "test content"}
 
 	data, err := json.Marshal(tip)
@@ -164,7 +162,6 @@ func TestTipResponseStructure(t *testing.T) {
 }
 
 func TestTipsResponseStructure(t *testing.T) {
-	// Test JSON marshaling/unmarshaling
 	response := TipsResponse{
 		Tips: []TipResponse{
 			{Content: "tip 1"},
@@ -257,7 +254,6 @@ func TestGenerateTipsJSONParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test the JSON parsing logic directly
 			cleanResp := strings.TrimSpace(tt.response)
 			if strings.HasPrefix(cleanResp, "```json") || strings.HasPrefix(cleanResp, "```") {
 				cleanResp = strings.TrimPrefix(cleanResp, "```json")
@@ -275,7 +271,6 @@ func TestGenerateTipsJSONParsing(t *testing.T) {
 			}
 
 			if tt.expectError && err == nil && len(tipsResponse.Tips) == 0 {
-				// Simulate the "no tips generated" error
 				err = &NoTipsError{}
 			}
 
@@ -283,7 +278,6 @@ func TestGenerateTipsJSONParsing(t *testing.T) {
 				if err == nil {
 					t.Error("Expected error but got none")
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
-					// For JSON errors, just check if we got an error
 					if !strings.Contains(tt.errorContains, "failed to parse") {
 						t.Errorf("Expected error containing '%s', got '%s'", tt.errorContains, err.Error())
 					}
@@ -297,7 +291,6 @@ func TestGenerateTipsJSONParsing(t *testing.T) {
 	}
 }
 
-// Helper error type for testing
 type NoTipsError struct{}
 
 func (e *NoTipsError) Error() string {
@@ -305,13 +298,11 @@ func (e *NoTipsError) Error() string {
 }
 
 func TestPromptGeneration(t *testing.T) {
-	// Test that the prompt contains expected elements
 	topic := "git"
 	count := 5
 
 	expectedPrompt := generatePromptString(topic, count)
 
-	// Check key elements are present
 	if !strings.Contains(expectedPrompt, topic) {
 		t.Errorf("Prompt should contain topic '%s'", topic)
 	}
@@ -329,9 +320,8 @@ func TestPromptGeneration(t *testing.T) {
 	}
 }
 
-// Helper function to generate prompt (extracted from generateTips for testing)
 func generatePromptString(topic string, count int) string {
-	return `Generate ` + string(rune(count+'0')) + ` concise cheatsheet-style tips about ` + topic + `. Each tip should be:
+	return fmt.Sprintf(`Generate %d concise cheatsheet-style tips about %s. Each tip should be:
 - Brief and to-the-point (1-2 sentences max)
 - Include specific commands, shortcuts, or code snippets when applicable
 - Focus on practical, immediately usable information
@@ -350,15 +340,13 @@ IMPORTANT: Return ONLY a valid JSON object. Do not wrap it in markdown code bloc
   ]
 }
 
-Generate ` + string(rune(count+'0')) + ` tips about ` + topic + ` in this cheatsheet style.`
+Generate %d tips about %s in this cheatsheet style.`, count, topic, count, topic)
 }
 
 func TestModelEnvironmentHandling(t *testing.T) {
-	// Save original
 	original := os.Getenv("TIPS_MODEL")
 	defer os.Setenv("TIPS_MODEL", original)
 
-	// Test default model
 	os.Setenv("TIPS_MODEL", "")
 	expectedDefault := "openai/gpt-4o"
 
@@ -371,7 +359,6 @@ func TestModelEnvironmentHandling(t *testing.T) {
 		t.Errorf("Expected default model '%s', got '%s'", expectedDefault, model)
 	}
 
-	// Test custom model
 	customModel := "anthropic/claude-3-sonnet"
 	os.Setenv("TIPS_MODEL", customModel)
 

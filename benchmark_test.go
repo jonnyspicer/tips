@@ -17,7 +17,6 @@ func BenchmarkTipsData_addTip(b *testing.B) {
 func BenchmarkTipsData_getRandomTip(b *testing.B) {
 	td := &TipsData{}
 
-	// Pre-populate with test data
 	for i := 0; i < 1000; i++ {
 		td.addTip("benchmark", "Benchmark tip content for performance testing")
 	}
@@ -29,7 +28,6 @@ func BenchmarkTipsData_getRandomTip(b *testing.B) {
 }
 
 func BenchmarkTipsData_removeTip(b *testing.B) {
-	// Pre-populate with test data
 	td := &TipsData{}
 	tipIDs := make([]string, b.N)
 
@@ -47,19 +45,16 @@ func BenchmarkTipsData_removeTip(b *testing.B) {
 }
 
 func BenchmarkLoadTips(b *testing.B) {
-	// Create a temporary tips file for benchmarking
 	tmpDir := b.TempDir()
 	originalHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
 
-	// Create test data
 	testData := &TipsData{}
 	for i := 0; i < 100; i++ {
 		testData.addTip("benchmark", "Benchmark tip content for load testing")
 	}
 
-	// Save the test data
 	if err := saveTips(testData); err != nil {
 		b.Fatalf("Failed to save test data: %v", err)
 	}
@@ -79,7 +74,6 @@ func BenchmarkSaveTips(b *testing.B) {
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", originalHome)
 
-	// Create test data
 	testData := &TipsData{}
 	for i := 0; i < 100; i++ {
 		testData.addTip("benchmark", "Benchmark tip content for save testing")
@@ -97,7 +91,6 @@ func BenchmarkSaveTips(b *testing.B) {
 func BenchmarkTipFiltering(b *testing.B) {
 	td := &TipsData{}
 
-	// Create tips with different topics
 	topics := []string{"git", "vim", "bash", "docker", "kubernetes"}
 	for _, topic := range topics {
 		for i := 0; i < 200; i++ {
@@ -114,7 +107,6 @@ func BenchmarkTipFiltering(b *testing.B) {
 func BenchmarkLargeDatasetOperations(b *testing.B) {
 	td := &TipsData{}
 
-	// Create a large dataset
 	for i := 0; i < 10000; i++ {
 		td.addTip("large-dataset", "This is tip content for large dataset benchmark testing")
 	}
@@ -135,7 +127,6 @@ func BenchmarkLargeDatasetOperations(b *testing.B) {
 func BenchmarkConcurrentAccess(b *testing.B) {
 	td := &TipsData{}
 
-	// Pre-populate with some data
 	for i := 0; i < 1000; i++ {
 		td.addTip("concurrent", "Concurrent access benchmark tip")
 	}
@@ -151,7 +142,6 @@ func BenchmarkConcurrentAccess(b *testing.B) {
 func BenchmarkJSONOperations(b *testing.B) {
 	td := &TipsData{}
 
-	// Create realistic dataset
 	for i := 0; i < 1000; i++ {
 		td.addTip("json-bench", "This is a benchmark tip with realistic content length for JSON serialization testing")
 	}
@@ -170,7 +160,6 @@ func BenchmarkJSONOperations(b *testing.B) {
 		}
 	})
 
-	// Save once for load benchmark
 	if err := saveTips(td); err != nil {
 		b.Fatalf("Failed to save data for load benchmark: %v", err)
 	}
