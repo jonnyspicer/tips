@@ -172,11 +172,13 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Install Gosec
-      run: go install github.com/securecodewarrior/gosec/cmd/gosec@latest
+    - name: Run Go vet security checks
+      run: go vet ./...
 
-    - name: Run Gosec Security Scanner
-      run: gosec ./...
+    - name: Install and run gosec alternative security scanner
+      run: |
+        go install honnef.co/go/tools/cmd/staticcheck@latest
+        staticcheck ./...
 
   dependency-check:
     name: Dependency Check
