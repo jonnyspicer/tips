@@ -113,7 +113,7 @@ jobs:
         ./tips-linux-amd64 --help
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: tips-${{ matrix.goos }}-${{ matrix.goarch }}
         path: tips-${{ matrix.goos }}-${{ matrix.goarch }}*

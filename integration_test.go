@@ -135,7 +135,7 @@ func TestConcurrentAccess(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Test only concurrent reads to avoid race conditions from concurrent writes
-	numGoroutines := 3  // Further reduced to minimize race conditions
+	numGoroutines := 3 // Further reduced to minimize race conditions
 	errChan := make(chan error, numGoroutines)
 
 	// Create initial tips file with proper data
