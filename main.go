@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
-const Version = "1.0.0"
+const Version = "1.0.1"
 
 var (
 	topicFlag   []string
@@ -141,6 +143,7 @@ func init() {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
